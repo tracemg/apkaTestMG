@@ -10,6 +10,8 @@ class Repository {
 
   String get uid => _db.auth.currentUser!.id;
 
+  bool get hasSession => _db.auth.currentSession != null;
+
   // ---------- Auth ----------
 
   Future<void> signIn(String email, String password) =>
@@ -18,6 +20,13 @@ class Repository {
   Future<void> signUp(String email, String password, String fullName) => _db
       .auth
       .signUp(email: email, password: password, data: {'full_name': fullName});
+
+  /// Potwierdza rejestrację kodem z maila; po sukcesie użytkownik jest zalogowany.
+  Future<void> verifySignUpCode(String email, String code) =>
+      _db.auth.verifyOTP(email: email, token: code, type: OtpType.signup);
+
+  Future<void> resendSignUpCode(String email) =>
+      _db.auth.resend(email: email, type: OtpType.signup);
 
   Future<void> signOut() => _db.auth.signOut();
 

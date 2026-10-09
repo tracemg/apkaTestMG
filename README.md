@@ -24,7 +24,15 @@ app/                   aplikacja Flutter
 1. Załóż darmowy projekt na <https://supabase.com>.
 2. **SQL Editor** → wklej `supabase/migrations/0001_init.sql` → **Run**.
 3. **Project Settings → API Keys** → skopiuj *Project URL* i *Publishable key*.
-4. (Opcjonalnie, na czas testów) **Authentication → Sign In / Providers → Email** —
+4. **Authentication → Emails → Confirm signup** — rejestrację potwierdza się
+   kodem wpisywanym w aplikacji, więc w treści maila zamień link
+   `{{ .ConfirmationURL }}` na kod, np.:
+
+   ```html
+   <h2>Potwierdź rejestrację</h2>
+   <p>Twój kod: <strong>{{ .Token }}</strong></p>
+   ```
+5. (Opcjonalnie, na czas testów) **Authentication → Sign In / Providers → Email** —
    wyłącz *Confirm email*, żeby nie trzeba było potwierdzać maili.
 
 ### 2. Aplikacja
