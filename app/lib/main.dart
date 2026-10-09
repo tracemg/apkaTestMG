@@ -26,40 +26,37 @@ Future<void> main() async {
   runApp(const JudoApp());
 }
 
-class JudoApp extends StatelessWidget {
+/// Wspólna konfiguracja MaterialApp (motyw, polski język).
+Widget clubMaterialApp({required Widget home}) => MaterialApp(
+  title: 'Judo Team Masters',
+  debugShowCheckedModeBanner: false,
+  locale: const Locale('pl'),
+  supportedLocales: const [Locale('pl')],
+  localizationsDelegates: GlobalMaterialLocalizations.delegates,
+  theme: ThemeData(
+    colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1F3A93)),
+  ),
+  darkTheme: ThemeData(
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: const Color(0xFF1F3A93),
+      brightness: Brightness.dark,
+    ),
+  ),
+  home: home,
+);
+
+/// Pokazuje logowanie albo aplikację, zależnie od sesji.
+///
+/// AppScope musi być NAD MaterialApp, żeby widziały go też ekrany
+/// otwierane przez Navigator.push (profil, edytory, szczegóły zawodów).
+class JudoApp extends StatefulWidget {
   const JudoApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Judo Team Masters',
-      debugShowCheckedModeBanner: false,
-      locale: const Locale('pl'),
-      supportedLocales: const [Locale('pl')],
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1F3A93)),
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1F3A93),
-          brightness: Brightness.dark,
-        ),
-      ),
-      home: const _AuthGate(),
-    );
-  }
+  State<JudoApp> createState() => _JudoAppState();
 }
 
-/// Pokazuje logowanie albo aplikację, zależnie od sesji.
-class _AuthGate extends StatefulWidget {
-  const _AuthGate();
-
-  @override
-  State<_AuthGate> createState() => _AuthGateState();
-}
-
-class _AuthGateState extends State<_AuthGate> {
+class _JudoAppState extends State<JudoApp> {
   final _repo = Repository(Supabase.instance.client);
   Profile? _me;
   Object? _error;
@@ -70,7 +67,10 @@ class _AuthGateState extends State<_AuthGate> {
     super.initState();
     _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((state) {
       if (state.session == null) {
-        setState(() => _me = null);
+        setState(() {
+          _me = null;
+          _error = null;
+        });
       } else if (_me == null || _me!.id != state.session!.user.id) {
         _loadMe();
       }
@@ -99,34 +99,40 @@ class _AuthGateState extends State<_AuthGate> {
   @override
   Widget build(BuildContext context) {
     final session = Supabase.instance.client.auth.currentSession;
-    if (session == null) return LoginScreen(repo: _repo);
+    if (session == null) {
+      return clubMaterialApp(home: LoginScreen(repo: _repo));
+    }
     if (_error != null) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Nie udało się wczytać profilu:\n$_error',
-                textAlign: TextAlign.center,
-              ),
-              TextButton(
-                onPressed: _repo.signOut,
-                child: const Text('Wyloguj'),
-              ),
-            ],
+      return clubMaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Nie udało się wczytać profilu:\n$_error',
+                  textAlign: TextAlign.center,
+                ),
+                TextButton(
+                  onPressed: _repo.signOut,
+                  child: const Text('Wyloguj'),
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
     if (_me == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return clubMaterialApp(
+        home: const Scaffold(body: Center(child: CircularProgressIndicator())),
+      );
     }
     return AppScope(
       repo: _repo,
       me: _me!,
       reloadMe: _loadMe,
-      child: const HomeShell(),
+      child: clubMaterialApp(home: const HomeShell()),
     );
   }
 }
